@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alexa Voice Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Orbitron',sans-serif;}
+body{
+  background:#0a0e27 url('https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?q=80&w=2013&auto=format&fit=crop') center/cover fixed;
+  color:#fff;overflow-x:hidden;scroll-behavior:smooth;position:relative;
+}
+body::before{content:"";position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(10,14,39,0.85);z-index:0;}
+#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+.grid-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(rgba(255,255,255,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.05) 1px,transparent 1px);background-size:50px 50px;animation:gridMove 20s linear infinite;z-index:1;pointer-events:none;}
+@keyframes gridMove{0%{transform:translate(0,0);}100%{transform:translate(50px,50px);}}
+.floating-orb{position:fixed;border-radius:50%;filter:blur(40px);animation:float 20s infinite ease-in-out;pointer-events:none;z-index:1;}
+@keyframes float{0%,100%{transform:translate(0,0) scale(1);}33%{transform:translate(100px,-100px) scale(1.2);}66%{transform:translate(-100px,100px) scale(0.8);}}
+.orb1{width:300px;height:300px;top:10%;left:5%;background:radial-gradient(circle,rgba(255,107,107,0.4),transparent 70%);}
+.orb2{width:400px;height:400px;top:60%;right:10%;animation-delay:5s;background:radial-gradient(circle,rgba(102,126,234,0.4),transparent 70%);}
+.orb3{width:250px;height:250px;bottom:20%;left:40%;animation-delay:10s;background:radial-gradient(circle,rgba(250,112,154,0.4),transparent 70%);}
+header,section{position:relative;z-index:2;}
+header{display:flex;justify-content:space-between;align-items:center;padding:14px 50px;background:rgba(0,0,0,0.3);backdrop-filter:blur(15px);border-bottom:2px solid rgba(255,255,255,0.2);box-shadow:0 5px 30px rgba(0,0,0,0.3);position:sticky;top:0;z-index:100;flex-wrap:wrap;}
+.logo-container{display:flex;align-items:center;gap:15px;}
+.user-info{display:flex;align-items:center;gap:10px;font-size:14px;text-shadow:0 0 10px rgba(255,255,255,0.5);}
+.user-info button{padding:8px 15px;background:linear-gradient(135deg,#667eea,#764ba2);border:none;border-radius:8px;color:#fff;cursor:pointer;font-size:12px;transition:all 0.3s;box-shadow:0 4px 15px rgba(102,126,234,0.4);}
+.user-info button:hover{transform:scale(1.05);box-shadow:0 6px 25px rgba(102,126,234,0.6);}
+nav ul{list-style:none;display:flex;flex-wrap:wrap;gap:20px;}
+nav ul li a{font-size:15px;color:#fff;transition:all 0.3s;position:relative;padding:5px 0;text-decoration:none;text-shadow:0 0 5px rgba(255,255,255,0.3);}
+nav ul li a::after{content:"";position:absolute;bottom:0;left:0;width:0;height:2px;background:linear-gradient(90deg,#fff,rgba(255,255,255,0.5));transition:width 0.3s;}
+nav ul li a:hover{text-shadow:0 0 15px rgba(255,255,255,0.8);transform:translateY(-2px);}
+nav ul li a:hover::after{width:100%;}
+section{padding:50px 20px;max-width:1400px;margin:0 auto;}
+h2{color:#fff;margin-bottom:20px;font-size:28px;text-align:center;text-shadow:0 0 20px rgba(255,255,255,0.6),0 0 40px rgba(255,255,255,0.4);animation:titleGlow 3s ease-in-out infinite alternate;}
+@keyframes titleGlow{0%{text-shadow:0 0 20px rgba(255,255,255,0.6),0 0 40px rgba(255,255,255,0.4);}100%{text-shadow:0 0 30px rgba(255,255,255,0.9),0 0 50px rgba(255,255,255,0.6);}}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:20px;}
+.card{background:rgba(255,255,255,0.15);padding:20px;border-radius:15px;text-align:center;cursor:pointer;transition:all 0.3s;min-height:110px;display:flex;flex-direction:column;justify-content:center;align-items:center;border:2px solid rgba(255,255,255,0.3);backdrop-filter:blur(15px);position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.2);}
+.card::before{content:"";position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent);transition:left 0.5s;}
+.card:hover::before{left:100%;}
+.card:hover{transform:translateY(-10px) scale(1.05);box-shadow:0 15px 40px rgba(0,0,0,0.4);border-color:rgba(255,255,255,0.6);background:rgba(255,255,255,0.25);}
+.card img{width:50px;height:50px;margin-bottom:10px;filter:drop-shadow(0 0 8px rgba(255,255,255,0.8));}
+.card span{font-size:14px;font-weight:500;text-shadow:0 0 10px rgba(0,0,0,0.5);}
+#hero{padding:60px 20px;text-align:center;position:relative;min-height:400px;}
+.panel{position:absolute;background:rgba(255,255,255,0.2);backdrop-filter:blur(15px);border:2px solid rgba(255,255,255,0.4);border-radius:18px;padding:18px;min-width:150px;color:#fff;box-shadow:0 8px 32px rgba(0,0,0,0.3);transition:all 0.5s;animation:panelFloat 4s ease-in-out infinite alternate;}
+@keyframes panelFloat{0%{transform:translateY(0);}100%{transform:translateY(-10px);}}
+.panel:hover{transform:translateY(-15px) scale(1.08);box-shadow:0 12px 50px rgba(0,0,0,0.5);}
+.panel-title{font-weight:700;font-size:15px;margin-bottom:8px;text-transform:uppercase;text-shadow:0 0 10px rgba(255,255,255,0.8);}
+.voice-mic-btn{position:fixed;bottom:30px;right:30px;width:85px;height:85px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);border:4px solid rgba(255,255,255,0.5);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:300;box-shadow:0 8px 30px rgba(102,126,234,0.5);transition:all 0.3s;}
+.voice-mic-btn:hover{transform:scale(1.15);box-shadow:0 12px 40px rgba(102,126,234,0.8);}
+.voice-mic-btn.active{animation:micPulse 1s infinite;background:linear-gradient(135deg,#ff6b6b,#ee5a6f);}
+@keyframes micPulse{0%,100%{transform:scale(1);box-shadow:0 0 20px rgba(255,107,107,0.6);}50%{transform:scale(1.15);box-shadow:0 0 50px rgba(255,107,107,1);}}
+.voice-mic-btn svg{width:42px;height:42px;fill:#fff;filter:drop-shadow(0 0 5px rgba(255,255,255,0.8));}
+#chatBox{position:fixed;bottom:20px;right:20px;width:400px;height:520px;background:rgba(0,0,0,0.4);backdrop-filter:blur(25px);border:3px solid rgba(255,255,255,0.3);border-radius:18px;display:none;flex-direction:column;overflow:hidden;z-index:200;box-shadow:0 15px 50px rgba(0,0,0,0.5);}
+#chatBox.active{display:flex;}
+#messages{flex:1;padding:12px;overflow-y:auto;display:flex;flex-direction:column;}
+.chat-message{padding:10px 14px;border-radius:18px;max-width:80%;word-wrap:break-word;font-size:14px;margin:6px;backdrop-filter:blur(10px);animation:messageSlide 0.3s;box-shadow:0 4px 15px rgba(0,0,0,0.2);}
+@keyframes messageSlide{0%{opacity:0;transform:translateY(10px);}100%{opacity:1;transform:translateY(0);}}
+.chat-message.user{background:linear-gradient(135deg,rgba(102,126,234,0.4),rgba(118,75,162,0.3));align-self:flex-end;color:#fff;margin-left:auto;border:2px solid rgba(255,255,255,0.3);}
+.chat-message.bot{background:linear-gradient(135deg,rgba(255,255,255,0.25),rgba(255,255,255,0.15));align-self:flex-start;color:#fff;border:2px solid rgba(255,255,255,0.25);}
+#inputContainer{display:flex;border-top:3px solid rgba(255,255,255,0.3);background:rgba(0,0,0,0.3);}
+#inputContainer input{flex:1;padding:12px;border:none;background:rgba(255,255,255,0.1);color:#fff;}
+#inputContainer input::placeholder{color:rgba(255,255,255,0.6);}
+#inputContainer button{padding:12px 22px;background:linear-gradient(135deg,#667eea,#764ba2);border:none;color:#fff;cursor:pointer;transition:all 0.3s;font-weight:600;}
+#inputContainer button:hover{background:linear-gradient(135deg,#764ba2,#667eea);box-shadow:0 0 25px rgba(102,126,234,0.6);}
+.weather-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;margin-top:25px;}
+.weather-card{background:rgba(255,255,255,0.2);padding:18px;border-radius:15px;border:2px solid rgba(255,255,255,0.3);text-align:center;backdrop-filter:blur(15px);transition:all 0.3s;box-shadow:0 8px 25px rgba(0,0,0,0.2);}
+.weather-card:hover{transform:translateY(-8px);box-shadow:0 12px 35px rgba(0,0,0,0.4);}
+.weather-card h3{color:#fff;font-size:19px;margin-bottom:10px;text-shadow:0 0 10px rgba(255,255,255,0.5);}
+.weather-card .temp{font-size:36px;color:#fff;font-weight:bold;margin:12px 0;text-shadow:0 0 20px rgba(255,255,255,0.8);}
+.weather-card .desc{color:#fff;font-size:14px;text-shadow:0 0 5px rgba(0,0,0,0.5);}
+button{padding:12px 24px;margin:6px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:10px;cursor:pointer;transition:all 0.3s;box-shadow:0 6px 20px rgba(102,126,234,0.4);position:relative;overflow:hidden;font-weight:600;}
+button::before{content:"";position:absolute;top:50%;left:50%;width:0;height:0;background:rgba(255,255,255,0.3);border-radius:50%;transform:translate(-50%,-50%);transition:width 0.6s,height 0.6s;}
+button:hover::before{width:300px;height:300px;}
+button:hover{background:linear-gradient(135deg,#764ba2,#667eea);box-shadow:0 8px 30px rgba(102,126,234,0.6);transform:translateY(-3px);}
+input{padding:12px;border-radius:10px;border:2px solid rgba(255,255,255,0.3);margin:6px 0;width:calc(100% - 24px);background:rgba(255,255,255,0.15);color:#fff;backdrop-filter:blur(10px);transition:all 0.3s;}
+input::placeholder{color:rgba(255,255,255,0.6);}
+input:focus{outline:none;border-color:rgba(255,255,255,0.8);box-shadow:0 0 25px rgba(255,255,255,0.4);background:rgba(255,255,255,0.25);}
+::-webkit-scrollbar{width:12px;}
+::-webkit-scrollbar-track{background:rgba(0,0,0,0.3);}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#667eea,#764ba2);border-radius:10px;box-shadow:0 0 15px rgba(102,126,234,0.5);}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#764ba2,#667eea);}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:500;justify-content:center;align-items:center;backdrop-filter:blur(10px);}
+.modal.active{display:flex;}
+.modal-content{background:rgba(255,255,255,0.15);padding:45px;border-radius:20px;border:3px solid rgba(255,255,255,0.4);backdrop-filter:blur(25px);max-width:420px;width:90%;box-shadow:0 15px 60px rgba(0,0,0,0.5);animation:modalPop 0.4s ease;}
+@keyframes modalPop{0%{transform:scale(0.8);opacity:0;}100%{transform:scale(1);opacity:1;}}
+.modal h2{margin-bottom:25px;text-align:center;text-shadow:0 0 20px rgba(255,255,255,0.8);}
+.modal input{width:calc(100% - 24px);margin-bottom:18px;padding:14px;}
+.modal-buttons{display:flex;gap:12px;justify-content:center;margin-top:25px;}
+.popup-frame{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;height:90%;max-width:1200px;max-height:800px;background:rgba(0,0,0,0.9);backdrop-filter:blur(25px);border:3px solid rgba(255,255,255,0.4);border-radius:20px;display:none;z-index:400;box-shadow:0 20px 80px rgba(0,0,0,0.8);animation:modalPop 0.4s ease;}
+.popup-frame.active{display:block;}
+.popup-header{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;background:rgba(255,255,255,0.1);border-bottom:2px solid rgba(255,255,255,0.3);}
+.popup-title{color:#fff;font-size:18px;text-shadow:0 0 15px rgba(255,255,255,0.8);}
+.popup-close{background:linear-gradient(135deg,#ff6b6b,#ee5a6f);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:bold;transition:all 0.3s;}
+.popup-close:hover{transform:scale(1.1);box-shadow:0 0 20px rgba(255,107,107,0.8);}
+.popup-iframe{width:100%;height:calc(100% - 60px);border:none;border-radius:0 0 18px 18px;}
+@media (max-width:768px){
+header{padding:10px 20px;flex-direction:column;gap:10px;}
+nav ul{gap:10px;justify-content:center;}
+#chatBox{width:90%;height:70%;bottom:10px;right:10px;}
+.voice-mic-btn{bottom:20px;right:20px;width:70px;height:70px;}
+.popup-frame{width:95%;height:85%;}
+}
+</style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+<div class="grid-overlay"></div>
+<div class="floating-orb orb1"></div>
+<div class="floating-orb orb2"></div>
+<div class="floating-orb orb3"></div>
+
+<div id="authModal" class="modal">
+<div class="modal-content">
+<h2>🤖 Alexa Voice Assistant</h2>
+<input type="text" id="authUsername" placeholder="Username">
+<input type="password" id="authPassword" placeholder="Password">
+<div class="modal-buttons">
+<button onclick="login()">Login</button>
+<button onclick="register()">Register</button>
+</div>
+<p style="text-align:center;margin-top:15px;font-size:12px;">New? Register first, then login</p>
+</div>
+</div>
+
+<div id="popupFrame" class="popup-frame">
+<div class="popup-header">
+<span class="popup-title" id="popupTitle">Loading...</span>
+<button class="popup-close" onclick="closePopup()">✕ Close</button>
+</div>
+<iframe id="popupIframe" class="popup-iframe"></iframe>
+</div>
+
+<header>
+<div class="logo-container">
+<div class="logo" onclick="document.getElementById('chatBox').classList.toggle('active')" style="cursor:pointer;font-size:24px;font-weight:bold;text-shadow:0 0 15px rgba(255,255,255,0.8);">🎤 ALEXA</div>
+<div class="user-info">
+<span id="usernameDisplay">Guest</span>
+<button onclick="clearHistory()">🗑️ Clear</button>
+<button onclick="logout()">Logout</button>
+</div>
+</div>
+<nav>
+<ul>
+<li><a href="#hero">Home</a></li>
+<li><a href="#games">Games</a></li>
+<li><a href="#ott">OTT</a></li>
+<li><a href="#music">Music</a></li>
+<li><a href="#shopping">Shopping</a></li>
+<li><a href="#delivery">Food</a></li>
+<li><a href="#social">Social</a></li>
+<li><a href="#news">News</a></li>
+<li><a href="#weather">Weather</a></li>
+<li><a href="#education">Education</a></li>
+</ul>
+</nav>
+</header>
+
+<section id="hero">
+<h3 style="margin-top:120px;margin-bottom:50px;text-shadow:0 0 20px rgba(255,255,255,0.8);font-size:32px;">Welcome to Alexa Voice Assistant 🎤</h3>
+<div class="panel" style="top:10%;left:5%;"><div class="panel-title">Time</div><span id="timeDisplay">--:--</span></div>
+<div class="panel" style="top:10%;right:5%;"><div class="panel-title">Date</div><span id="dateDisplay">--</span></div>
+<div class="panel" style="bottom:15%;left:5%;"><div class="panel-title">Location</div><span>India</span></div>
+</section>
+
+<div class="voice-mic-btn" onclick="toggleChatAndVoice()">
+<svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+</div>
+
+<div id="chatBox">
+<div id="messages"></div>
+<div id="inputContainer">
+<input type="text" id="userInput" placeholder="Ask me anything...">
+<button id="sendBtn">Send</button>
+</div>
+</div>
+
+<section id="games">
+<h2>🎮 Gaming Zone - Play Online Now!</h2>
+<div class="cards">
+<div class="card" onclick="openApp('https://now.gg/apps/garena-international/2352/free-fire.html')"><img src="https://img.icons8.com/color/48/fire-element.png" alt="Game"/><span>Free Fire</span></div>
+<div class="card" onclick="openApp('https://www.crazygames.com/game/ludo-hero')"><img src="https://img.icons8.com/color/48/dice.png" alt="Game"/><span>Ludo King</span></div>
+<div class="card" onclick="openApp('https://poki.com/en/g/subway-surfers')"><img src="https://img.icons8.com/color/48/subway.png" alt="Game"/><span>Subway Surfers</span></div>
+<div class="card" onclick="openApp('https://now.gg/play/pubg-mobile-metro-royale/2009/landing')"><img src="https://img.icons8.com/color/48/gun.png" alt="Game"/><span>PUBG Mobile</span></div>
+<div class="card" onclick="openApp('https://www.king.com/play/candycrush')"><img src="https://img.icons8.com/color/48/lollipop.png" alt="Game"/><span>Candy Crush</span></div>
+<div class="card" onclick="openApp('https://poki.com/en/g/temple-run-2')"><img src="https://img.icons8.com/color/48/running.png" alt="Game"/><span>Temple Run 2</span></div>
+<div class="card" onclick="openApp('https://www.crazygames.com/game/sniper-clash-3d')"><img src="https://img.icons8.com/color/48/sniper.png" alt="Game"/><span>Sniper Clash</span></div>
+<div class="card" onclick="openApp('https://www.chess.com/play/computer')"><img src="https://img.icons8.com/color/48/chess.png" alt="Game"/><span>Chess Online</span></div>
+<div class="card" onclick="openApp('https://poki.com/en/g/stickman-hook')"><img src="https://img.icons8.com/color/48/stickman.png" alt="Game"/><span>Stickman Hook</span></div>
+<div class="card" onclick="openApp('https://www.crazygames.com/game/8-ball-pool')"><img src="https://img.icons8.com/color/48/billiard.png" alt="Game"/><span>8 Ball Pool</span></div>
+<div class="card" onclick="openApp('https://poki.com/en/g/drive-mad')"><img src="https://img.icons8.com/color/48/car.png" alt="Game"/><span>Drive Mad</span></div>
+<div class="card" onclick="openApp('https://www.crazygames.com/game/snake-io')"><img src="https://img.icons8.com/color/48/snake.png" alt="Game"/><span>Snake.io</span></div>
+<div class="card" onclick="openApp('https://poki.com/en/g/moto-x3m')"><img src="https://img.icons8.com/color/48/motorcycle.png" alt="Game"/><span>Moto X3M</span></div>
+<div class="card" onclick="openApp('https://www.crazygames.com/game/battle-royale')"><img src="https://img.icons8.com/color/48/battle.png" alt="Game"/><span>Battle Royale</span></div>
+<div class="card" onclick="openApp('https://poki.com/en/g/stunt-car-extreme')"><img src="https://img.icons8.com/color/48/racing-car.png" alt="Game"/><span>Stunt Car</span></div>
+<div class="card" onclick="openApp('https://www.crazygames.com/game/football-legends')"><img src="https://img.icons8.com/color/48/football.png" alt="Game"/><span>Football Legends</span></div>
+</div>
+</section>
+
+<section id="ott">
+<h2>🎬 OTT Streaming</h2>
+<div class="cards">
+<div class="card" onclick="openApp('https://www.netflix.com/')"><img src="https://img.icons8.com/color/48/netflix.png" alt="OTT"/><span>Netflix</span></div>
+<div class="card" onclick="openApp('https://www.primevideo.com/')"><img src="https://img.icons8.com/color/48/amazon-prime-video.png" alt="OTT"/><span>Prime Video</span></div>
+<div class="card" onclick="openApp('https://www.jiohotstar.com/')"><img src="https://img.icons8.com/color/48/video-playlist.png" alt="OTT"/><span>JioHotstar</span></div>
+<div class="card" onclick="openAppPopup('https://www.youtube.com/','YouTube')"><img src="https://img.icons8.com/color/48/youtube-play.png" alt="OTT"/><span>YouTube</span></div>
+<div class="card" onclick="openApp('https://www.zee5.com/')"><img src="https://img.icons8.com/color/48/video-camera.png" alt="OTT"/><span>ZEE5</span></div>
+<div class="card" onclick="openApp('https://www.sonyliv.com/')"><img src="https://img.icons8.com/color/48/play-button-circled.png" alt="OTT"/><span>SonyLIV</span></div>
+<div class="card" onclick="openApp('https://www.voot.com/')"><img src="https://img.icons8.com/color/48/tv-show.png" alt="OTT"/><span>Voot</span></div>
+<div class="card" onclick="openApp('https://www.mxplayer.in/')"><img src="https://img.icons8.com/color/48/video.png" alt="OTT"/><span>MX Player</span></div>
+<div class="card" onclick="openApp('https://www.hulu.com/')"><img src="https://img.icons8.com/color/48/hulu.png" alt="OTT"/><span>Hulu</span></div>
+<div class="card" onclick="openApp('https://www.appletv.com/')"><img src="https://img.icons8.com/color/48/apple-tv.png" alt="OTT"/><span>Apple TV+</span></div>
+<div class="card" onclick="openApp('https://www.hbomax.com/')"><img src="https://img.icons8.com/color/48/hbo.png" alt="OTT"/><span>HBO Max</span></div>
+<div class="card" onclick="openApp('https://www.paramount.com/')"><img src="https://img.icons8.com/color/48/film-reel.png" alt="OTT"/><span>Paramount+</span></div>
+<div class="card" onclick="openApp('https://www.erosnow.com/')"><img src="https://img.icons8.com/color/48/movie.png" alt="OTT"/><span>Eros Now</span></div>
+<div class="card" onclick="openApp('https://www.altbalaji.com/')"><img src="https://img.icons8.com/color/48/cinema-.png" alt="OTT"/><span>ALTBalaji</span></div>
+<div class="card" onclick="openApp('https://www.discovery.com/')"><img src="https://img.icons8.com/color/48/tv.png" alt="OTT"/><span>Discovery+</span></div>
+<div class="card" onclick="openApp('https://www.jiocinema.com/')"><img src="https://img.icons8.com/color/48/3d-glasses.png" alt="OTT"/><span>JioCinema</span></div>
+</div>
+</section>
+
+<section id="music">
+<h2>🎵 Music Streaming</h2>
+<div class="cards">
+<div class="card" onclick="openApp('https://www.spotify.com/')"><img src="https://img.icons8.com/color/48/spotify.png" alt="Music"/><span>Spotify</span></div>
+<div class="card" onclick="openApp('https://music.apple.com/')"><img src="https://img.icons8.com/color/48/apple-music.png" alt="Music"/><span>Apple Music</span></div>
+<div class="card" onclick="openAppPopup('https://music.youtube.com/','YouTube Music')"><img src="https://img.icons8.com/color/48/youtube-music.png" alt="Music"/><span>YouTube Music</span></div>
+<div class="card" onclick="openApp('https://www.jiosaavn.com/')"><img src="https://img.icons8.com/color/48/music.png" alt="Music"/><span>JioSaavn</span></div>
+<div class="card" onclick="openApp('https://www.gaana.com/')"><img src="https://img.icons8.com/color/48/musical-notes.png" alt="Music"/><span>Gaana</span></div>
+<div class="card" onclick="openApp('https://soundcloud.com/')"><img src="https://img.icons8.com/color/48/soundcloud.png" alt="Music"/><span>SoundCloud</span></div>
+</div>
+</section>
+
+<section id="shopping">
+<h2>🛍️ Shopping</h2>
+<div class="cards">
+<div class="card" onclick="openApp('https://www.amazon.in/')"><img src="https://img.icons8.com/color/48/amazon.png" alt="Shop"/><span>Amazon</span></div>
+<div class="card" onclick="openApp('https://www.flipkart.com/')"><img src="https://img.icons8.com/color/48/shopping-cart.png" alt="Shop"/><span>Flipkart</span></div>
+<div class="card" onclick="openApp('https://www.myntra.com/')"><img src="https://img.icons8.com/color/48/clothes.png" alt="Shop"/><span>Myntra</span></div>
+<div class="card" onclick="openApp('https://www.nykaa.com/')"><img src="https://img.icons8.com/color/48/lipstick.png" alt="Shop"/><span>Nykaa</span></div>
+<div class="card" onclick="openApp('https://www.meesho.com/')"><img src="https://img.icons8.com/color/48/shop.png" alt="Shop"/><span>Meesho</span></div>
+<div class="card" onclick="openApp('https://www.snapdeal.com/')"><img src="https://img.icons8.com/color/48/price-tag.png" alt="Shop"/><span>Snapdeal</span></div>
+</div>
+</section>
+
+<section id="delivery">
+<h2>🍔 Food & Grocery</h2>
+<div class="cards">
+<div class="card" onclick="openApp('https://www.zomato.com/')"><img src="https://img.icons8.com/color/48/zomato.png" alt="Food"/><span>Zomato</span></div>
+<div class="card" onclick="openApp('https://www.swiggy.com/')"><img src="https://img.icons8.com/color/48/swiggy.png" alt="Food"/><span>Swiggy</span></div>
+<div class="card" onclick="openApp('https://www.dominos.co.in/')"><img src="https://img.icons8.com/color/48/pizza.png" alt="Food"/><span>Domino's</span></div>
+<div class="card" onclick="openApp('https://www.mcdelivery.co.in/')"><img src="https://img.icons8.com/color/48/mcdonalds.png" alt="Food"/><span>McDonald's</span></div>
+<div class="card" onclick="openApp('https://blinkit.com/')"><img src="https://img.icons8.com/color/48/shopping-basket.png" alt="Grocery"/><span>Blinkit</span></div>
+<div class="card" onclick="openApp('https://www.bigbasket.com/')"><img src="https://img.icons8.com/color/48/shopping-basket.png" alt="Grocery"/><span>BigBasket</span></div>
+</div>
+</section>
+
+<section id="social">
+<h2>📱 Social Media</h2>
+<div class="cards">
+<div class="card" onclick="openApp('https://www.facebook.com/')"><img src="https://img.icons8.com/color/48/facebook.png" alt="Social"/><span>Facebook</span></div>
+<div class="card" onclick="openApp('https://www.instagram.com/')"><img src="https://img.icons8.com/color/48/instagram-new.png" alt="Social"/><span>Instagram</span></div>
+<div class="card" onclick="openApp('https://twitter.com/')"><img src="https://img.icons8.com/color/48/twitter.png" alt="Social"/><span>Twitter/X</span></div>
+<div class="card" onclick="openApp('https://www.linkedin.com/')"><img src="https://img.icons8.com/color/48/linkedin.png" alt="Social"/><span>LinkedIn</span></div>
+<div class="card" onclick="openApp('https://www.snapchat.com/')"><img src="https://img.icons8.com/color/48/snapchat.png" alt="Social"/><span>Snapchat</span></div>
+<div class="card" onclick="openApp('https://www.reddit.com/')"><img src="https://img.icons8.com/color/48/reddit.png" alt="Social"/><span>Reddit</span></div>
+</div>
+</section>
+
+<section id="news">
+<h2>📰 News Channels</h2>
+<div class="cards">
+<div class="card" onclick="openAppPopup('https://www.ndtv.com/','NDTV')"><img src="https://img.icons8.com/color/48/news.png" alt="News"/><span>NDTV</span></div>
+<div class="card" onclick="openAppPopup('https://www.timesnownews.com/','Times Now')"><img src="https://img.icons8.com/color/48/news.png" alt="News"/><span>Times Now</span></div>
+<div class="card" onclick="openAppPopup('https://www.indiatoday.in/','India Today')"><img src="https://img.icons8.com/color/48/news.png" alt="News"/><span>India Today</span></div>
+<div class="card" onclick="openAppPopup('https://www.bbc.com/news','BBC News')"><img src="https://img.icons8.com/color/48/bbc.png" alt="News"/><span>BBC News</span></div>
+<div class="card" onclick="openAppPopup('https://www.cnn.com/','CNN')"><img src="https://img.icons8.com/color/48/cnn.png" alt="News"/><span>CNN</span></div>
+<div class="card" onclick="openAppPopup('https://timesofindia.indiatimes.com/','Times of India')"><img src="https://img.icons8.com/color/48/newspaper.png" alt="News"/><span>Times of India</span></div>
+</div>
+</section>
+
+<section id="weather">
+<h2>🌤️ India Weather Dashboard</h2>
+<button onclick="loadIndiaWeather()">🔄 Refresh Weather</button>
+<div class="weather-grid" id="weatherGrid"></div>
+</section>
+
+<section id="education">
+<h2>📚 Educational Platforms</h2>
+<div class="cards">
+<div class="card" onclick="openApp('https://www.khanacademy.org/')"><img src="https://img.icons8.com/color/48/education.png" alt="Edu"/><span>Khan Academy</span></div>
+<div class="card" onclick="openApp('https://www.coursera.org/')"><img src="https://img.icons8.com/color/48/coursera.png" alt="Edu"/><span>Coursera</span></div>
+<div class="card" onclick="openApp('https://www.udemy.com/')"><img src="https://img.icons8.com/color/48/udemy.png" alt="Edu"/><span>Udemy</span></div>
+<div class="card" onclick="openApp('https://www.edx.org/')"><img src="https://img.icons8.com/color/48/education.png" alt="Edu"/><span>edX</span></div>
+<div class="card" onclick="openApp('https://www.byjus.com/')"><img src="https://img.icons8.com/color/48/student-center.png" alt="Edu"/><span>BYJU'S</span></div>
+<div class="card" onclick="openApp('https://unacademy.com/')"><img src="https://img.icons8.com/color/48/education.png" alt="Edu"/><span>Unacademy</span></div>
+<div class="card" onclick="openApp('https://www.duolingo.com/')"><img src="https://img.icons8.com/color/48/duolingo.png" alt="Edu"/><span>Duolingo</span></div>
+<div class="card" onclick="openApp('https://www.codecademy.com/')"><img src="https://img.icons8.com/color/48/source-code.png" alt="Edu"/><span>Codecademy</span></div>
+</div>
+</section>
+
+<script>
+const BACKEND_URL = 'http://localhost:5000';
+let currentUserId = null;
+let currentUsername = '';
+let recognition = null;
+let isListening = false;
+
+// Particle System
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+let particles = [];
+let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+
+class Particle {
+  constructor() {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.size = Math.random() * 3 + 1;
+    this.speedX = Math.random() * 1 - 0.5;
+    this.speedY = Math.random() * 1 - 0.5;
+    this.color = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.3})`;
+  }
+  update() {
+    this.x += this.speedX;
+    this.y += this.speedY;
+    const dx = mouse.x - this.x;
+    const dy = mouse.y - this.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    if (distance < 150) {
+      const force = (150 - distance) / 150;
+      this.x += dx * force * 0.01;
+      this.y += dy * force * 0.01;
+    }
+    if (this.x > canvas.width) this.x = 0;
+    if (this.x < 0) this.x = canvas.width;
+    if (this.y > canvas.height) this.y = 0;
+    if (this.y < 0) this.y = canvas.height;
+  }
+  draw() {
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+for (let i = 0; i < 100; i++) particles.push(new Particle());
+
+function connectParticles() {
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance < 120) {
+        ctx.strokeStyle = `rgba(255, 255, 255, ${(1 - distance / 120) * 0.2})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.stroke();
+      }
+    }
+  }
+}
+
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles.forEach(particle => {
+    particle.update();
+    particle.draw();
+  });
+  connectParticles();
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+document.addEventListener('mousemove', (e) => {
+  mouse.x = e.clientX;
+  mouse.y = e.clientY;
+});
+
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+
+// Popup Functions
+function openAppPopup(url, title) {
+  document.getElementById('popupTitle').textContent = title;
+  document.getElementById('popupIframe').src = url;
+  document.getElementById('popupFrame').classList.add('active');
+  appendMessage(`🌐 Opening ${title} in popup`, 'bot');
+}
+
+function closePopup() {
+  document.getElementById('popupFrame').classList.remove('active');
+  document.getElementById('popupIframe').src = '';
+}
+
+// Clear Chat History
+function clearHistory() {
+  document.getElementById('messages').innerHTML = '';
+  appendMessage('🗑️ Alexa says: Chat history cleared!', 'bot');
+  speak('Chat history cleared');
+}
+
+// Text-to-Speech Function
+function speak(text) {
+  if ('speechSynthesis' in window) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1.1;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    speechSynthesis.speak(utterance);
+  }
+}
+
+// Voice Recognition Setup
+if ('webkitSpeechRecognition' in window) {
+  recognition = new webkitSpeechRecognition();
+  recognition.continuous = false;
+  recognition.lang = 'en-US';
+  recognition.onresult = (e) => {
+    const transcript = e.results[0][0].transcript;
+    document.getElementById('userInput').value = transcript;
+    processVoiceCommand(transcript);
+  };
+  recognition.onend = () => {
+    isListening = false;
+    document.querySelector('.voice-mic-btn').classList.remove('active');
+  };
+  recognition.onerror = (e) => {
+    console.error('Speech error:', e.error);
+    appendMessage('⚠️ Voice recognition error. Try again.', 'bot');
+    speak('Voice recognition error. Please try again.');
+    isListening = false;
+    document.querySelector('.voice-mic-btn').classList.remove('active');
+  };
+}
+
+function toggleChatAndVoice() {
+  const chatBox = document.getElementById('chatBox');
+  const micBtn = document.querySelector('.voice-mic-btn');
+  
+  // Toggle chatbox
+  chatBox.classList.toggle('active');
+  
+  // If chatbox is now open and recognition is available, start voice
+  if (chatBox.classList.contains('active') && recognition) {
+    if (!isListening) {
+      recognition.start();
+      isListening = true;
+      micBtn.classList.add('active');
+      appendMessage('🎤 Listening... Speak now or type your message!', 'bot');
+      speak('Listening');
+    }
+  } else {
+    // Stop voice if chatbox is closing
+    if (isListening && recognition) {
+      recognition.stop();
+      isListening = false;
+      micBtn.classList.remove('active');
+    }
+  }
+}
+
+function toggleVoice() {
+  if (!recognition) {
+    appendMessage('❌ Voice recognition not supported in your browser', 'bot');
+    speak('Voice recognition not supported in your browser');
+    document.getElementById('chatBox').classList.add('active');
+    return;
+  }
+  if (isListening) {
+    recognition.stop();
+  } else {
+    recognition.start();
+    isListening = true;
+    document.querySelector('.voice-mic-btn').classList.add('active');
+    document.getElementById('chatBox').classList.add('active');
+    appendMessage('🎤 Listening... Speak now!', 'bot');
+    speak('Listening');
+  }
+}
+
+function processVoiceCommand(cmd) {
+  cmd = cmd.toLowerCase();
+  appendMessage(cmd, 'user');
+  
+  if (cmd.includes('play') && (cmd.includes('song') || cmd.includes('music') || cmd.includes('video'))) {
+    const song = cmd.replace('play', '').replace('song', '').replace('music', '').replace('video', '').trim();
+    if (song) {
+      openApp(`https://www.youtube.com/results?search_query=${encodeURIComponent(song)}`);
+      const message = `Playing ${song} on YouTube`;
+      appendMessage(`🎵 Alexa says: ${message}`, 'bot');
+      speak(message);
+    } else {
+      openApp('https://music.youtube.com/');
+      appendMessage('🎵 Alexa says: Opening YouTube Music', 'bot');
+      speak('Opening YouTube Music');
+    }
+    return;
+  }
+  
+  const appCommands = {
+    'netflix': ['https://www.netflix.com/', 'Opening Netflix'],
+    'youtube': ['https://www.youtube.com/', 'Opening YouTube'],
+    'spotify': ['https://www.spotify.com/', 'Opening Spotify'],
+    'amazon': ['https://www.amazon.in/', 'Opening Amazon'],
+    'flipkart': ['https://www.flipkart.com/', 'Opening Flipkart'],
+    'facebook': ['https://www.facebook.com/', 'Opening Facebook'],
+    'instagram': ['https://www.instagram.com/', 'Opening Instagram'],
+    'twitter': ['https://twitter.com/', 'Opening Twitter'],
+    'whatsapp': ['https://web.whatsapp.com/', 'Opening WhatsApp'],
+    'gmail': ['https://mail.google.com/', 'Opening Gmail'],
+    'google': ['https://www.google.com/', 'Opening Google'],
+    'news': ['https://www.ndtv.com/', 'Opening News'],
+    'weather': ['#weather', 'Showing Weather'],
+    'zomato': ['https://www.zomato.com/', 'Opening Zomato'],
+    'swiggy': ['https://www.swiggy.com/', 'Opening Swiggy'],
+  };
+  
+  for (let [key, [url, message]] of Object.entries(appCommands)) {
+    if (cmd.includes('open ' + key) || cmd.includes('launch ' + key) || cmd.includes(key)) {
+      if (url.startsWith('#')) {
+        document.querySelector(url).scrollIntoView({behavior: 'smooth'});
+        appendMessage(`📍 Alexa says: ${message}`, 'bot');
+        speak(message);
+      } else {
+        openApp(url);
+        appendMessage(`✅ Alexa says: ${message}`, 'bot');
+        speak(message);
+      }
+      return;
+    }
+  }
+  
+  if (cmd.includes('time')) {
+    const time = new Date().toLocaleTimeString();
+    appendMessage(`⏰ Alexa says: ${time}`, 'bot');
+    speak(`The current time is ${time}`);
+    return;
+  }
+  if (cmd.includes('date') || cmd.includes('today')) {
+    const date = new Date().toDateString();
+    appendMessage(`📅 Alexa says: ${date}`, 'bot');
+    speak(`Today is ${date}`);
+    return;
+  }
+  
+  sendMessage();
+}
+
+// Auth Functions
+async function register() {
+  const username = document.getElementById('authUsername').value.trim();
+  const password = document.getElementById('authPassword').value.trim();
+  
+  if (!username || !password) {
+    alert('Please enter both username and password');
+    return;
+  }
+  
+  if (password.length < 6) {
+    alert('Password must be at least 6 characters');
+    return;
+  }
+  
+  try {
+    const res = await fetch(`${BACKEND_URL}/register`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username, password})
+    });
+    const data = await res.json();
+    alert(data.message);
+    if (res.ok) {
+      appendMessage('✅ Registration successful! Now please login.', 'bot');
+      speak('Registration successful! Now please login.');
+    }
+  } catch (err) {
+    alert('Error connecting to server. Make sure backend is running!');
+    console.error(err);
+  }
+}
+
+async function login() {
+  const username = document.getElementById('authUsername').value.trim();
+  const password = document.getElementById('authPassword').value.trim();
+  
+  if (!username || !password) {
+    alert('Please enter both username and password');
+    return;
+  }
+  
+  try {
+    const res = await fetch(`${BACKEND_URL}/login`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username, password})
+    });
+    const data = await res.json();
+    
+    if (res.ok) {
+      currentUserId = data.user_id;
+      currentUsername = username;
+      document.getElementById('usernameDisplay').textContent = username;
+      document.getElementById('authModal').classList.remove('active');
+      document.getElementById('chatBox').classList.add('active');
+      const welcomeMsg = `Welcome ${username}! I'm Alexa, your AI assistant. Ask me anything!`;
+      appendMessage(`👋 ${welcomeMsg}`, 'bot');
+      speak(`Welcome to Alexa, ${username}. How can I help you today?`);
+      loadIndiaWeather();
+    } else {
+      alert(data.message);
+    }
+  } catch (err) {
+    alert('Error connecting to server. Make sure backend is running on port 5000!');
+    console.error(err);
+  }
+}
+
+function logout() {
+  currentUserId = null;
+  currentUsername = '';
+  document.getElementById('usernameDisplay').textContent = 'Guest';
+  document.getElementById('authModal').classList.add('active');
+  document.getElementById('chatBox').classList.remove('active');
+  document.getElementById('messages').innerHTML = '';
+  document.getElementById('authUsername').value = '';
+  document.getElementById('authPassword').value = '';
+  speak('Goodbye! Come back soon.');
+}
+
+window.addEventListener('load', () => {
+  document.getElementById('authModal').classList.add('active');
+  speak('Welcome to Alexa Voice Assistant. Please login to continue.');
+});
+
+// Chat Functions
+document.getElementById('sendBtn').addEventListener('click', sendMessage);
+document.getElementById('userInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') sendMessage();
+});
+
+function appendMessage(content, sender) {
+  const div = document.createElement('div');
+  div.className = 'chat-message ' + sender;
+  div.textContent = content;
+  document.getElementById('messages').appendChild(div);
+  const messagesDiv = document.getElementById('messages');
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+async function sendMessage() {
+  const userText = document.getElementById('userInput').value.trim();
+  if (!userText) return;
+  
+  appendMessage(userText, 'user');
+  document.getElementById('userInput').value = '';
+  
+  try {
+    const res = await fetch(`${BACKEND_URL}/chat`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: userText, user_id: currentUserId})
+    });
+    const data = await res.json();
+    const reply = data.reply || 'No response';
+    appendMessage(reply, 'bot');
+    speak(reply.replace(/[🎵📺🛍️📱💬📧🔍🗺️📰🍔🎬⏰📅✅📍🤖👋]/g, ''));
+    
+    if (data.action && data.action.type === 'open_url') {
+      setTimeout(() => openApp(data.action.url), 500);
+    }
+  } catch (err) {
+    const errorMsg = '⚠️ Backend not connected. Make sure Flask server is running!';
+    appendMessage(errorMsg, 'bot');
+    speak('Backend not connected. Make sure Flask server is running!');
+    console.error(err);
+  }
+}
+
+// Weather Functions
+async function loadIndiaWeather() {
+  const grid = document.getElementById('weatherGrid');
+  grid.innerHTML = '<p style="text-align:center;grid-column:1/-1;color:#fff;">Loading weather data...</p>';
+  
+  try {
+    const res = await fetch(`${BACKEND_URL}/weather/india`);
+    const data = await res.json();
+    
+    if (data.error) {
+      grid.innerHTML = `<p style="text-align:center;grid-column:1/-1;color:#fff;">${data.error}</p>`;
+      return;
+    }
+    
+    grid.innerHTML = '';
+    data.forEach(city => {
+      const card = document.createElement('div');
+      card.className = 'weather-card';
+      card.innerHTML = `
+        <h3>${city.city}</h3>
+        <div class="temp">${city.temp}°C</div>
+        <div class="desc">${city.description}</div>
+        <div style="font-size:12px;margin-top:8px;">
+          💧 ${city.humidity}% Humidity
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+    appendMessage('🌤️ Alexa says: Weather data loaded successfully!', 'bot');
+    speak('Weather data loaded successfully');
+  } catch (err) {
+    grid.innerHTML = '<p style="text-align:center;grid-column:1/-1;color:#fff;">Error: Backend not connected</p>';
+    console.error(err);
+  }
+}
+
+// Utility Functions
+function openApp(url) {
+  window.open(url, '_blank');
+}
+
+function updateTimeAndDate() {
+  const now = new Date();
+  document.getElementById('timeDisplay').textContent = now.toLocaleTimeString();
+  document.getElementById('dateDisplay').textContent = now.toDateString();
+}
+setInterval(updateTimeAndDate, 1000);
+updateTimeAndDate();
+
+document.getElementById('authPassword').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') login();
+});
+</script>
+</body>
+</html>
