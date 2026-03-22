@@ -1,141 +1,168 @@
-# ⚡ EduAI Hub — Final Year Project
+# 🤖 AI Voice Assistant (Alexa Clone)
 
-**An AI-Powered Learning & Career Assistant for Students & Employees**
+👩‍💻 Developed by: **Sanjana Mathe**
 
-Built with: Python Flask + Google Gemini AI
-
----
-
-## 📁 Project Structure
-
-```
-EduAI-Hub/
-├── app.py                  ← Main Python/Flask server (backend)
-├── requirements.txt        ← Python libraries to install
-└── templates/
-    ├── index.html          ← Home page
-    ├── tutor.html          ← AI Tutor module
-    ├── quiz.html           ← Quiz Generator module
-    ├── resume.html         ← Resume Analyzer module
-    ├── interview.html      ← Interview Prep module
-    └── news.html           ← Tech News module
-```
+A full-stack AI-powered voice assistant that can understand user commands, respond intelligently, and perform real-world actions like opening apps, searching the web, playing music, and more.
 
 ---
 
-## 🚀 STEP-BY-STEP SETUP (Beginner Level)
+## 🚀 Features
 
-### STEP 1 — Install Python
-- Download Python 3.10+ from https://python.org
-- During installation, CHECK "Add Python to PATH"
-- Verify: Open CMD/Terminal → type `python --version`
+* 🎤 Voice command recognition (frontend UI + backend processing)
+* 🔊 Text-to-speech response using Python
+* 🌐 Open websites like YouTube, Google, Netflix, etc.
+* 🔍 Smart search functionality
+* ⏰ Real-time time & date responses
+* 🌦️ Weather information (API-based)
+* 🤖 AI-based chat responses (ChatGPT integration ready)
+* 🔐 User authentication (Login/Register system)
+* 💬 Chat history stored using SQLite database
+* 🎮 Interactive UI with categories:
 
-### STEP 2 — Install VS Code
-- Download from https://code.visualstudio.com
-- Install the "Python" extension from VS Code marketplace
+  * Games, OTT, Music, Shopping, Social Media, Education
 
-### STEP 3 — Get FREE Gemini API Key
-1. Go to https://aistudio.google.com
-2. Sign in with your Google account
-3. Click "Get API Key" → "Create API Key"
-4. Copy the API key (keep it safe!)
+---
 
-### STEP 4 — Setup the Project
-Open your terminal/CMD and run these commands one by one:
+## 🛠️ Tech Stack
 
-```bash
-# Navigate to your project folder
-cd EduAI-Hub
+### 🔹 Frontend
 
-# Create a virtual environment (keeps your project clean)
-python -m venv venv
+* HTML, CSS, JavaScript 
+* Advanced UI animations & responsive design
 
-# Activate virtual environment
-# On Windows:
-venv\Scripts\activate
-# On Mac/Linux:
-source venv/bin/activate
+### 🔹 Backend
 
-# Install required libraries
-pip install -r requirements.txt
+* Python (Flask) 
+* REST API for communication
+
+### 🔹 Database
+
+* SQLite (user data + chat history) 
+
+### 🔹 Libraries & Tools
+
+* SpeechRecognition
+* pyttsx3 (Text-to-Speech)
+* requests (API calls)
+* Flask-CORS
+
+---
+
+## 📂 Project Structure
+
+```id="projstr1"
+ai-voice-assistant/
+ ├── app.py                 # Main backend server
+ ├── alexa_server_ai.py     # Voice command processing
+ ├── alexa.html             # Frontend UI
+ ├── users.db               # Database
+ ├── README.md
 ```
 
-### STEP 5 — Add Your API Key
-1. Open `app.py` in VS Code
-2. Find line: `GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE"`
-3. Replace with your actual key: `GEMINI_API_KEY = "AIza...your-key-here"`
-4. Save the file (Ctrl+S)
+---
 
-### STEP 6 — Run the Project
-```bash
+## ▶️ How to Run
+
+### 1️⃣ Install Python
+
+Make sure Python 3.10+ is installed
+
+---
+
+### 2️⃣ Install Required Libraries
+
+```id="cmd1"
+pip install flask flask-cors pyttsx3 speechrecognition requests
+```
+
+---
+
+### 3️⃣ Run Backend Server
+
+```id="cmd2"
 python app.py
 ```
 
-You should see:
+👉 Server runs on:
+
 ```
- * Running on http://127.0.0.1:5000
- * Debug mode: on
+http://localhost:5000
 ```
 
-### STEP 7 — Open in Browser
-Open your browser and go to: **http://localhost:5000**
+---
 
-🎉 Your EduAI Hub is now running!
+### 4️⃣ Open Frontend
+
+* Open `alexa.html` in browser
+* OR use Live Server in VS Code
 
 ---
 
-## 🛠️ Features
+### 5️⃣ Start Using Assistant 🎤
 
-| Module | Description |
-|--------|-------------|
-| 🎓 AI Tutor | Ask any tech question, get clear explanations |
-| 📝 Quiz Generator | Auto-generate MCQ quizzes on any topic |
-| 📄 Resume Analyzer | AI feedback on your resume |
-| 💼 Interview Prep | Practice interview Q&A with model answers |
-| 📡 Tech News | Latest technology trends & insights |
+* Click microphone button
+* Speak commands like:
 
----
-
-## ❓ Common Issues
-
-**Issue:** `ModuleNotFoundError`
-**Fix:** Run `pip install -r requirements.txt` again
-
-**Issue:** `AI Error: Invalid API Key`
-**Fix:** Check your API key in app.py. Make sure no spaces around it.
-
-**Issue:** Port already in use
-**Fix:** Change `port=5000` to `port=5001` in app.py
-
-**Issue:** PDF not reading correctly
-**Fix:** Make sure the PDF has selectable text (not scanned images)
+  * “Open YouTube”
+  * “Play music”
+  * “What is time?”
+  * “Search for AI”
 
 ---
 
-## 📊 Technologies Used
+## 🔑 API Setup (Optional but Powerful)
 
-- **Python 3.10+** — Backend programming language
-- **Flask** — Lightweight web framework
-- **Google Gemini 1.5 Flash** — AI model (free tier available)
-- **PyPDF2** — PDF text extraction
-- **HTML/CSS/JavaScript** — Frontend interface
-- **SQLite** (optional) — Can be added for user data storage
+To enable full features:
 
----
+* 🌦️ Weather API → OpenWeather
+* 🔍 Google Search API
+* 🤖 OpenAI API
 
-## 🎯 Future Enhancements (for viva/presentation)
+👉 Add keys inside `app.py`:
 
-1. Add user login/signup system
-2. Save quiz scores and progress history
-3. Add speech-to-text for voice questions
-4. Add roadmap generator (suggest learning path)
-5. Deploy to cloud (Render.com — free hosting)
+```id="api1"
+WEATHER_API_KEY = "your_key"
+GOOGLE_API_KEY = "your_key"
+OPENAI_API_KEY = "your_key"
+```
 
 ---
 
-## 👨‍💻 Project Info
+## 📸 Demo
 
-- **Project Type:** Final Year Project (IT Department)
-- **Tech Stack:** Python, Flask, Google Gemini AI, HTML/CSS/JS
-- **Unique Feature:** 5-in-1 AI platform for students AND employees
-- **Cost:** FREE (Gemini free tier: 15 requests/min)
+👉 Add your screenshot or video here
+
+Example:
+
+```id="img1"
+![Demo](demo.png)
+```
+
+---
+
+## 💡 Future Improvements
+
+* 🖥️ GUI Desktop App version
+* 📱 Mobile app integration
+* 🤖 Full AI chatbot integration
+* 🌍 Multi-language voice support
+* ☁️ Deploy on cloud (Render / Vercel)
+
+---
+
+## 🎯 Project Highlights
+
+* Full-stack project (Frontend + Backend + Database)
+* Real-world application (Voice Assistant)
+* AI + Automation based system
+* Interactive modern UI
+
+---
+
+## ⭐ Conclusion
+
+This project demonstrates how voice-based AI systems can be built using Python and web technologies to create smart, interactive assistants similar to Alexa.
+
+---
+
+👉 If you like this project, give it a ⭐ on GitHub!
